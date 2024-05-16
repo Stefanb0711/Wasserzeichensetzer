@@ -38,22 +38,30 @@ def datei_auswählen():
 
 
 def datei_speichern():
-    img = Image.new("RGBA", (canvas.winfo_reqwidth(), canvas.winfo_reqheight()), (255, 255, 255, 255))
+    try:
+        img = Image.new("RGBA", (canvas.winfo_reqwidth(), canvas.winfo_reqheight()), (255, 255, 255, 255))
 
-    draw = ImageDraw.Draw(img)
-    canvas.update()
+        draw = ImageDraw.Draw(img)
+        canvas.update()
 
-    canvas.postscript(file="temp.ps", colormode="color")
-    temp_img = Image.open("temp.ps")
-    img.paste(temp_img, (0, 0))
+        canvas.postscript(file="temp.ps", colormode="color")
+        temp_img = Image.open("temp.ps")
+        img.paste(temp_img, (0, 0))
 
-    dateiname = filedialog.asksaveasfilename(defaultextension=".png",
-                                             filetypes=[("PNG files", "*.png"), ("All files", "*.*")])
+        dateiname = filedialog.asksaveasfilename(defaultextension=".png",
+                                                 filetypes=[("PNG files", "*.png"), ("All files", "*.*")])
 
-    if dateiname:
-        # canvas.postscript(file=dateiname, colormode='color')
+        if dateiname:
+            # canvas.postscript(file=dateiname, colormode='color')
 
-        img.save(dateiname, format="PNG")
+            img.save(dateiname, format="PNG")
+
+    except Exception as e:
+        print(f"Fehler beim Laden des Bildes: {e}")
+
+
+
+
 
 font_name = "Arial"
 
@@ -118,7 +126,10 @@ def zeige_wert(wert):
 
 hauptmenü = Menu(window)
 
-window.config(background='#3D3D3D', menu=hauptmenü)
+#bg_color = '#3D3D3D'
+
+#window.config(background=bg_color, menu=hauptmenü)
+window.config(menu=hauptmenü)
 window.title("Wasserzeichensetzer")
 window.geometry("1200x800")
 
@@ -156,37 +167,37 @@ ausgewählter_font.set(fonts[0])
 
 font_liste_dropdown = OptionMenu(window, ausgewählter_font, *fonts)
 print(ausgewählter_font)
-font_liste_dropdown.place(x=900, y=380)
+font_liste_dropdown.place(x=900, y=280)
 
 textfeld_label = Label(window, text="Text")
-textfeld_label.place(x=900, y=440)
+textfeld_label.place(x=900, y=350)
 wasserzeichen_textfeld = Entry(window)
-wasserzeichen_textfeld.place(x=980, y=440)
+wasserzeichen_textfeld.place(x=980, y=350)
 
 winkel_setzen_label = Label(window, text="Winkel")
-winkel_setzen_label.place(x=900, y=500)
+winkel_setzen_label.place(x=900, y=420)
 wasserzeichen_winkel_regler = Scale(window, from_=0, to=360, orient=HORIZONTAL, command=zeige_wert)
-wasserzeichen_winkel_regler.place(x=1000, y=500)
+wasserzeichen_winkel_regler.place(x=1000, y=400)
 
 schriftgrösse_setzen_label = Label(window, text="Schriftgröße")
-schriftgrösse_setzen_label.place(x=900, y=550)
+schriftgrösse_setzen_label.place(x=900, y=470)
 schriftgrösse_regler = Scale(window, from_=10, to=100, orient=HORIZONTAL, command=zeige_wert)
-schriftgrösse_regler.place(x=1000, y=550)
+schriftgrösse_regler.place(x=1000, y=450)
 
 zeichen_setzen_button = Button(window, text="Wasserzeichen setzen", pady=5, padx=20, command=wasserzeichen_setzen)
-zeichen_setzen_button.place(x=900, y=700)
+zeichen_setzen_button.place(x=900, y=580)
 
 winkel_label = Label(window, text="Winkel: 0 ")
 
 scale_position_x = Scale(window, from_=0, to=800, orient=HORIZONTAL)
-scale_position_x.place(x=950, y=200)
+scale_position_x.place(x=950, y=120)
 scale_position_y = Scale(window, from_=0, to=600, orient=HORIZONTAL)
-scale_position_y.place(x=950, y=150)
+scale_position_y.place(x=950, y=80)
 
 label_position_x = Label(window, text="X")
 label_position_y = Label(window, text="Y")
-label_position_x.place(x=900, y=200)
-label_position_y.place(x=900, y=150)
+label_position_x.place(x=900, y=140)
+label_position_y.place(x=900, y=100)
 
 elemente = ["Rot", "Grün", "Blau"]
 
@@ -196,20 +207,12 @@ colorbox = Listbox(window, selectmode=SINGLE,
 for element in elemente:
     colorbox.insert(END, element)
 
-colorbox.place(x=900, y=300)
+colorbox.place(x=900, y=200)
 
 checkbutton_var = IntVar(value=1)
-vorschau_check_button = Checkbutton(window, text="Vorschau", variable=checkbutton_var, command=canvas_verstecken)
-vorschau_check_button.place(x=900, y=650)
+vorschau_check_button = Checkbutton(window, text="Zeichenfläche ausblenden", variable=checkbutton_var, command=canvas_verstecken)
+vorschau_check_button.place(x=900, y=530)
 
-"""
-dateipfad = "C:/Users/Stefan/Downloads/gif_hintergrund.gif"
-ausgewähltes_bild = PhotoImage(file=dateipfad)
-try:
-    #beispiel_img = PhotoImage(file="C:/Users/Stefan/Downloads/gif_hintergrund.gif")
-    canvas.create_image(100, 100, anchor=NW, image=ausgewähltes_bild)
-except Exception as e:
-    print(f"Fehler beim Laden des Bildes: {e}")
-"""
+
 
 window.mainloop()
