@@ -1,12 +1,16 @@
 import tkinter
 from tkinter import *
 from tkinter import filedialog
+from PIL import Image, ImageDraw, ImageFont, ImageTk
+import io
 
 window = Tk()
 
-fonts = ["Arial", "Helvetica", "Montserrat"]
+fonts = ["Times New Roman", "Comic Sans MS", "Courier New"]
 
 ausgewähltes_bild = ""
+
+
 def datei_auswählen():
     global ausgewähltes_bild
     dateipfad = filedialog.askopenfilename()
@@ -23,37 +27,82 @@ def datei_auswählen():
         # Berechne Position für die Mitte des Canvas
         x_position = (canvas_breite - bild_breite) // 2
         y_position = (canvas_höhe - bild_höhe) // 2
+
+        canvas.image = ausgewähltes_bild
+
         canvas.create_image(x_position, y_position, anchor=NW, image=ausgewähltes_bild)
 
     except Exception as e:
         print(f"Fehler beim Laden des Bildes: {e}")
-    #canvas.create_image(50, 50, image= ausgewähltes_bild, anchor=NW)
+    # canvas.create_image(50, 50, image= ausgewähltes_bild, anchor=NW)
+
+
+def datei_speichern():
+    img = Image.new("RGBA", (canvas.winfo_reqwidth(), canvas.winfo_reqheight()), (255, 255, 255, 255))
+
+    draw = ImageDraw.Draw(img)
+    canvas.update()
+
+    canvas.postscript(file="temp.ps", colormode="color")
+    temp_img = Image.open("temp.ps")
+    img.paste(temp_img, (0, 0))
+
+    dateiname = filedialog.asksaveasfilename(defaultextension=".png",
+                                             filetypes=[("PNG files", "*.png"), ("All files", "*.*")])
+
+    if dateiname:
+        # canvas.postscript(file=dateiname, colormode='color')
+
+        img.save(dateiname, format="PNG")
+
+font_name = "Arial"
+
+
+RED = "red"
+GREEN = "green"
+BLUE = "blue"
+
+w_text = ""
+w_text_position = (0, 0)
+w_angle = None
+w_color = None
+w_font_size = 20
+w_font = ImageFont.truetype("arial.ttf", 20)
 
 
 def wasserzeichen_setzen():
-    #Farbe des Wasser zeichens
-    selected_index = listbox.curselection()
-    wasserzeichen_farbe = "black"
-    if selected_index:
-        selected_item = listbox.get(selected_index[0])
-        if selected_item == "Rot":
-            wasserzeichen_farbe = "red"
-        elif selected_item == "Grün":
-            wasserzeichen_farbe = "green"
-        elif selected_item == "Blau":
-            wasserzeichen_farbe = "blue"
+    global w_text, w_text_position, w_angle, w_color, w_font, w_font_size
+
+    w_text = wasserzeichen_textfeld.get()
+    w_text_position = (scale_position_x.get(), scale_position_y.get())
+    w_angle = wasserzeichen_winkel_regler.get()
+    w_font_size = schriftgrösse_regler.get()
+
+    colorbox_index = colorbox.curselection()
+    if colorbox_index:
+        selected_color = colorbox.get(colorbox_index)
+
+        if selected_color == "Rot":
+            w_color = RED
+        elif selected_color == "Grün":
+            w_color = GREEN
+        elif selected_color == "Blau":
+            w_color = BLUE
 
 
-    wasserzeichen_text = wasserzeichen_textfeld.get()
-    wasserzeichen_winkel = wasserzeichen_winkel_regler.get()
-    wasserzeichen_font = (ausgewählter_font.get(), schriftgrösse_regler.get(), "bold")
-    #schriftgröße = schriftgrösse_regler.get()
-   # wasserzeichen_font = f"{ausgewählter_font.get()} 40 Bold"
-    canvas.create_text(400, 300, text=wasserzeichen_text, font = wasserzeichen_font, angle=wasserzeichen_winkel, fill=wasserzeichen_farbe)
+    if ausgewählter_font.get() == "Times New Roman":
+        font_name = "Times New Roman"
+
+    elif ausgewählter_font.get() == "Comic Sans MS":
+        font_name = "Comic Sans MS"
+
+    elif ausgewählter_font.get() == "Courier New":
+        font_name = "Courier New"
+
+    canvas.create_text(w_text_position, text=w_text, fill=w_color, font=(font_name, w_font_size),angle=w_angle)
 
 
 def canvas_verstecken():
-
     if checkbutton_var.get() == 0:
         for item in canvas.find_all():
             canvas.itemconfig(item, state=HIDDEN)
@@ -61,13 +110,15 @@ def canvas_verstecken():
         for item in canvas.find_all():
             canvas.itemconfig(item, state=NORMAL)
 
+
 def zeige_wert(wert):
-    #winkel_label.config(text=f"Wert : {wert}")
+    # winkel_label.config(text=f"Wert : {wert}")
     pass
+
 
 hauptmenü = Menu(window)
 
-window.config(background='#3D3D3D', menu= hauptmenü)
+window.config(background='#3D3D3D', menu=hauptmenü)
 window.title("Wasserzeichensetzer")
 window.geometry("1200x800")
 
@@ -79,17 +130,14 @@ button_save = Button(window, text= "Save")
 button_save.grid(column=1, row=0)
 """
 
-
-canvas = Canvas(window, width=800, height=600, background='white')
-canvas.grid(column=0, row=1, columnspan=2)
+canvas = Canvas(window, width=800, height=600, background="white")
+canvas.grid(column=0, row=1, columnspan=2, padx=20, pady=20)
 
 datei_menu = Menu(hauptmenü, tearoff=0)
 hauptmenü.add_cascade(label="Datei", menu=datei_menu)
 
 datei_menu.add_command(label="Datei auswählen", command=datei_auswählen)
-
-
-
+datei_menu.add_command(label="Speichern", command=datei_speichern)
 
 """button_black_watermark = Button(window, text="Black", padx=20, pady=5)
 button_black_watermark.place(x=900, y=250)
@@ -108,48 +156,51 @@ ausgewählter_font.set(fonts[0])
 
 font_liste_dropdown = OptionMenu(window, ausgewählter_font, *fonts)
 print(ausgewählter_font)
-font_liste_dropdown.place(x = 900, y = 380)
+font_liste_dropdown.place(x=900, y=380)
 
 textfeld_label = Label(window, text="Text")
-textfeld_label.place(x= 900, y= 440)
+textfeld_label.place(x=900, y=440)
 wasserzeichen_textfeld = Entry(window)
-wasserzeichen_textfeld.place(x = 980, y = 440)
+wasserzeichen_textfeld.place(x=980, y=440)
 
 winkel_setzen_label = Label(window, text="Winkel")
-winkel_setzen_label.place(x= 900, y= 500)
-wasserzeichen_winkel_regler = Scale(window, from_=0, to= 360, orient=HORIZONTAL, command=zeige_wert)
-wasserzeichen_winkel_regler.place(x = 1000, y = 500)
+winkel_setzen_label.place(x=900, y=500)
+wasserzeichen_winkel_regler = Scale(window, from_=0, to=360, orient=HORIZONTAL, command=zeige_wert)
+wasserzeichen_winkel_regler.place(x=1000, y=500)
 
 schriftgrösse_setzen_label = Label(window, text="Schriftgröße")
-schriftgrösse_setzen_label.place(x= 900, y= 550)
-schriftgrösse_regler = Scale(window, from_=10, to= 100, orient=HORIZONTAL, command=zeige_wert)
-schriftgrösse_regler.place(x = 1000, y = 550)
-
-transparenz_label = Label(window, text="Transparenz")
-transparenz_label.place(x= 900, y = 600)
-transparenz_regler = Scale(window, from_=0, to= 100, orient=HORIZONTAL)
-transparenz_regler.place(x = 1000, y = 600)
-
+schriftgrösse_setzen_label.place(x=900, y=550)
+schriftgrösse_regler = Scale(window, from_=10, to=100, orient=HORIZONTAL, command=zeige_wert)
+schriftgrösse_regler.place(x=1000, y=550)
 
 zeichen_setzen_button = Button(window, text="Wasserzeichen setzen", pady=5, padx=20, command=wasserzeichen_setzen)
-zeichen_setzen_button.place(x= 900, y= 700)
+zeichen_setzen_button.place(x=900, y=700)
 
 winkel_label = Label(window, text="Winkel: 0 ")
 
+scale_position_x = Scale(window, from_=0, to=800, orient=HORIZONTAL)
+scale_position_x.place(x=950, y=200)
+scale_position_y = Scale(window, from_=0, to=600, orient=HORIZONTAL)
+scale_position_y.place(x=950, y=150)
+
+label_position_x = Label(window, text="X")
+label_position_y = Label(window, text="Y")
+label_position_x.place(x=900, y=200)
+label_position_y.place(x=900, y=150)
 
 elemente = ["Rot", "Grün", "Blau"]
 
 # Listbox erstellen
-listbox = Listbox(window, selectmode=SINGLE, height=3)  # selectmode=tk.SINGLE ermöglicht die Auswahl eines einzelnen Elements
+colorbox = Listbox(window, selectmode=SINGLE,
+                   height=3)  # selectmode=tk.SINGLE ermöglicht die Auswahl eines einzelnen Elements
 for element in elemente:
-    listbox.insert(END, element)
+    colorbox.insert(END, element)
 
-listbox.place(x = 900, y = 300)
-
+colorbox.place(x=900, y=300)
 
 checkbutton_var = IntVar(value=1)
 vorschau_check_button = Checkbutton(window, text="Vorschau", variable=checkbutton_var, command=canvas_verstecken)
-vorschau_check_button.place(x = 900 , y = 650)
+vorschau_check_button.place(x=900, y=650)
 
 """
 dateipfad = "C:/Users/Stefan/Downloads/gif_hintergrund.gif"
@@ -162,4 +213,3 @@ except Exception as e:
 """
 
 window.mainloop()
-
